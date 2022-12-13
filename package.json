@@ -1,0 +1,14 @@
+{
+  "name": "finapi",
+  "version": "1.0.0",
+  "description": "financial API",
+  "main": "index.js",
+  "repository": "git@github.com:fernandosantoshs/finAPI.git",
+  "author": "fernandosantoshs <fernandosantoshs@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
+  }
+}
