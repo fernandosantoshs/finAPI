@@ -38,9 +38,15 @@ function getBalance(statement) {
       return acc - currentStatement.amount
     }
   }, 0);
-
+  
   return balance
 }
+
+app.get("/account", checkUserExistance, (request, response) => {
+  const { customer } = request;
+
+  response.status(200).send(customer)
+});
 
 app.post("/account", (request, response) => {
   const { name, cpf } = request.body;
@@ -48,61 +54,39 @@ app.post("/account", (request, response) => {
   const userAlreadyExists = customers.some((customer) => customer.cpf === cpf);
 
   if (userAlreadyExists) return response.status(400).json({ error: "User already exists" });
-
+  
   customers.push({
     cpf: cpf,
     name: name,
     id: uuidv4(),
     statement: [],
   });
-
+  
   return response.status(201).send({ message: "Account created Successfully" })
+});
+
+app.put("/account", checkUserExistance, (request, response) => {
+  const { customer } = request;
+  const { name } = request.body;
+
+  customer.name = name;
+
+  response.status(200).json({message: "Account uptaded successfully"})
+});
+
+app.delete("/account", checkUserExistance, (request, response) => {
+  const { customer } = request;
+  const customerIndex = customers.find(requestCustomer => customer.id === requestCustomer.id)
+
+  customers.splice(customerIndex, 1)
+  
+  response.status(204).send()
 });
 
 app.get("/statement", checkUserExistance, (request, response) => {
   const { customer } = request;
-
+  
   return response.status(200).json(customer.statement)
-});
-
-app.post("/deposit", checkUserExistance, (request, response) => {
-  const { customer } = request;
-  const { description, amount } = request.body;
-
-  if (Number(amount) < 0) amount = Math.abs(amount);
-
-  const depositTransaction = {
-    description: description,
-    amount: amount,
-    createdAt: new Date(),
-    type: "credit",
-  };
-
-  customer.statement.push(depositTransaction)
-
-  return response.status(201).send(depositTransaction)
-});
-
-app.post("/withdraw", checkUserExistance, (request, response) => {
-  const { customer } = request;
-  const { amount } = request.body;
-
-  amount = Math.abs(amount)
-
-  const balance = getBalance(customer.statement);
-
-  if (balance < amount) return response.status(400).json({ error: "Insufficient funds!" });
-
-  const withdrawTransaction = {
-    description: "withdraw",
-    amount,
-    createdAt: new Date(),
-    type: "debit",
-  };
-
-  customer.statement.push(withdrawTransaction)
-
-  return response.status(201).send()
 });
 
 app.get("/statement/date", checkUserExistance, (request, response) => {
@@ -122,6 +106,54 @@ app.get("/statement/date", checkUserExistance, (request, response) => {
   if(statementByDate.length <= 1) return response.send(200).json({message: "No statement for period"})
 
   response.status(200).send(statementByDate)
+});
+
+app.post("/deposit", checkUserExistance, (request, response) => {
+  const { customer } = request;
+  const { description, amount } = request.body;
+  
+  if (Number(amount) < 0) amount = Math.abs(amount);
+  
+  const depositTransaction = {
+    description: description,
+    amount: amount,
+    createdAt: new Date(),
+    type: "credit",
+  };
+  
+  customer.statement.push(depositTransaction)
+  
+  return response.status(201).send(depositTransaction)
+});
+
+app.post("/withdraw", checkUserExistance, (request, response) => {
+  const { customer } = request;
+  const { amount } = request.body;
+  
+  amount = Math.abs(amount)
+  
+  const balance = getBalance(customer.statement);
+  
+  if (balance < amount) return response.status(400).json({ error: "Insufficient funds!" });
+  
+  const withdrawTransaction = {
+    description: "withdraw",
+    amount,
+    createdAt: new Date(),
+    type: "debit",
+  };
+  
+  customer.statement.push(withdrawTransaction)
+  
+  return response.status(201).send()
+});
+
+app.get("/balance", checkUserExistance, (request, response) => {
+  const { customer } = request;
+
+  const balance = getBalance(customer.statement)
+
+  response.status(200).json(balance)
 })
 
 app.listen(3333);
