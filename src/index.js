@@ -103,8 +103,9 @@ app.get("/statement/date", checkUserExistance, (request, response) => {
     }
   })
 
-  if(statementByDate.length <= 1) return response.send(200).json({message: "No statement for period"})
-
+  if (statementByDate.length <= 1) {
+    return response.send(200).json({message: "No statement for period"})
+  }
   response.status(200).send(statementByDate)
 });
 
